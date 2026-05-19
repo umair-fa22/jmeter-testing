@@ -1,0 +1,48 @@
+name: JMeter Performance Tests
+
+on:
+  push:
+    branches: [ master ] # change to master to run on actual master branch
+  pull_request:
+    branches: [ master ] # change to master to run on actual master branch
+
+jobs:
+  jmeter-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Download Apache JMeter
+        run: |
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
+          tar -xzf apache-jmeter-5.6.3.tgz
+
+      - name: Run JMeter Tests
+        run: |
+          mkdir -p results reports
+          apache-jmeter-5.6.3/bin/jmeter.sh \
+            -n \
+            -t test_plan.jmx \
+            -l results/results.jtl \
+            -e \
+            -o reports/
+
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-html-report
+          path: reports/
+
+      - name: Upload JTL Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-jtl-results
+          path: results/results.jtl
